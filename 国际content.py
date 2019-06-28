@@ -6,17 +6,18 @@ import os
 import time
 import csv
 import codecs
-
+import chardet
 Headers = {'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0.3 Safari/605.1.15'}
 
-JSON_PATH = './国内/金融新闻.txt'
-SAVE_PATH = './国内content/金融新闻.csv'
+JSON_PATH = './国际/国际滚动.json'
+SAVE_PATH_GBK = './国际content/国际滚动_GBK.csv'
+SAVE_PATH_UTF8 = './国际content/国际滚动_UTF8.csv'
 def main():
     # json method
-    # a = json.load(open(JSON_PATH))
+    a = json.load(open(JSON_PATH))
     # txt method
-    with open(JSON_PATH) as f:
-        a = [f.read().split('\n')]
+    # with open(JSON_PATH) as f:
+    #     a = [f.read().split('\n')]
     s = requests.Session()
 
     for urllist in a:
@@ -25,29 +26,30 @@ def main():
                 res = s.get(url, headers=Headers,timeout=5)
             except :
                 continue
-            infolist = []
-            content = res.content.decode('gbk','ignore')
+            finallist = []
+            encode_type = chardet.detect(res.content)['encoding']
+            print(encode_type)
+            content = res.content.decode(encode_type,'ignore').replace("\n",'').strip()
             if '页面没有找到' in content:
                 continue
-            if 'roll' in url:
-                infolist = handle_world(content,url)
-                print(infolist)
-            elif 'china' in url :
-                infolist = handle_world(content,url)
-                print(infolist)
-            elif 'special' in url:
-                infolist = handle_world(content,url)
-                print(infolist)
-            elif 'usstock' in url:
-                content = res.content.decode('utf-8', 'ignore')
-                infolist = handle_usstock(content)
-                print(infolist)
-            # write into file
-            if infolist != [] and infolist != None:
-                with codecs.open(SAVE_PATH,'a+','utf-8') as f:
-                    writer = csv.writer(f)
-                    writer.writerow(infolist)
+            if 'usstock' in url:
+                finallist = handle_usstock(content)
+                print(finallist)
+            else :
+                finallist = handle_world(content,url)
+                print(finallist)
 
+
+            # write into file
+            if finallist != [] and finallist != None:
+                if encode_type == 'utf-8' or encode_type == 'UTF-8':
+                    with codecs.open(SAVE_PATH_UTF8,'a+','utf-8','ignore') as f:
+                        writer = csv.writer(f)
+                        writer.writerow(finallist)
+                elif encode_type == 'gbk' or encode_type == 'GB2312'or encode_type == 'GBK':
+                    with codecs.open(SAVE_PATH_GBK,'a+','gbk','ignore') as f:
+                        writer = csv.writer(f)
+                        writer.writerow(finallist)
 
 # method to handle URL which has 'roll'
 

@@ -1,14 +1,25 @@
 import asyncio
+import time
+import aiohttp
 
-@asyncio.coroutine
-def hello():
-    print("Hello world!")
-    # 异步调用asyncio.sleep(1):
-    r = yield from asyncio.sleep(1)
-    print("Hello again!")
+async def main():
+    task1 = asyncio.create_task(p1r())
+    task2 = asyncio.create_task(pr())
 
-# 获取EventLoop:
-loop = asyncio.get_event_loop()
-# 执行coroutine
-loop.run_until_complete(asyncio.wait([hello() for i in range(10)]))
-loop.close()
+    # await task1
+    await task2
+    # print(task1.result())
+    # loop.close()
+
+async def p1r():
+    print('调用p1r',time.time())
+    await asyncio.sleep(1)
+    print('完成p1r')
+    return 'p1r返回值'
+async def pr():
+    print('调用pr',time.time())
+    return 1
+
+
+if __name__ == '__main__':
+    asyncio.run(main())
